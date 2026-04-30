@@ -1,3 +1,4 @@
+const itemRouter = require("express").Router();
 const {
   getItems,
   createItem,
@@ -5,8 +6,6 @@ const {
   updateItem,
   deleteItem,
 } = require("../controllers/clothingItems");
-
-const itemRouter = require("express").Router();
 
 itemRouter.get("/", getItems);
 itemRouter.get("/:itemId", getItem);
