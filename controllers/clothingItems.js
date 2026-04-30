@@ -50,13 +50,13 @@ const getItem = (req, res) => {
 
 const updateItem = (req, res) => {
   const { itemId } = req.params;
-  const { imageURL } = req.body;
+  const { imageUrl } = req.body;
 
-  ClothingItem.findByIdAndUpdate(itemId, { $set: { imageURL } })
+  ClothingItem.findByIdAndUpdate(itemId, { $set: { imageUrl } })
     .orFail()
     .then((item) => res.status(200).send({ data: item }))
     .catch((e) => {
-      res.status(500).send({ message: "Error from updateItem", e });
+      res.status(DEFAULT_SERVER_ERROR).send({ message: "Error from updateItem", e });
     });
 };
 
@@ -69,13 +69,13 @@ const deleteItem = (req, res) => {
     .catch((err) => {
       console.error(err);
       if (err.name === "CastError") {
-        return res.status(400).send({ message: "Invalid ID format" });
+        return res.status(BAD_REQUEST_STATUS_CODE).send({ message: "Invalid ID format" });
       }
       if (err.name === "DocumentNotFoundError") {
-        return res.status(404).send({ message: "Item not found" });
+        return res.status(RESOURCE_NOT_FOUND).send({ message: "Item not found" });
       }
       return res
-        .status(500)
+        .status(DEFAULT_SERVER_ERROR)
         .send({ message: "An error has occurred on the server" });
     });
 };
