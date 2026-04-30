@@ -17,7 +17,7 @@ const getItems = (req, res) => {
 const createItem = (req, res) => {
   const { itemName, weatherType, imageUrl } = req.body;
 
-  ClothingItem.create({ itemName, weatherType, imageUrl })
+  ClothingItem.create({ itemName, weatherType, imageUrl, owner: req.user._id })
     .then((item) => res.status(201).send(item))
     .catch((err) => {
       console.error(err);
@@ -56,7 +56,9 @@ const updateItem = (req, res) => {
     .orFail()
     .then((item) => res.status(200).send({ data: item }))
     .catch((e) => {
-      res.status(DEFAULT_SERVER_ERROR).send({ message: "Error from updateItem", e });
+      res
+        .status(DEFAULT_SERVER_ERROR)
+        .send({ message: "Error from updateItem", e });
     });
 };
 
@@ -69,10 +71,14 @@ const deleteItem = (req, res) => {
     .catch((err) => {
       console.error(err);
       if (err.name === "CastError") {
-        return res.status(BAD_REQUEST_STATUS_CODE).send({ message: "Invalid ID format" });
+        return res
+          .status(BAD_REQUEST_STATUS_CODE)
+          .send({ message: "Invalid ID format" });
       }
       if (err.name === "DocumentNotFoundError") {
-        return res.status(RESOURCE_NOT_FOUND).send({ message: "Item not found" });
+        return res
+          .status(RESOURCE_NOT_FOUND)
+          .send({ message: "Item not found" });
       }
       return res
         .status(DEFAULT_SERVER_ERROR)
