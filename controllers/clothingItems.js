@@ -89,40 +89,48 @@ const deleteItem = (req, res) => {
 const likeItem = (req, res) => {
   ClothingItem.findByIdAndUpdate(
     req.params.itemId,
-    { $addToSet: { likes: req.user._id } }, // add _id to the array if it's not there yet
+    { $addToSet: { likes: req.user._id } },
     { new: true }
   )
-    .then((item) => {
-      if (!item) {
-        return res.status(404).send({ message: "Item ID not found" });
-      }
-      return res.send(item);
-    })
+    .orFail()
+    .then((item) => res.status(200).send(item))
     .catch((err) => {
-      if (err.name === "CastError") {
-        return res.status(400).send({ message: "Invalid ID format" });
+      console.error(err);
+      if (err.name === "DocumentNotFoundError") {
+        return res
+          .status(RESOURCE_NOT_FOUND)
+          .send({ message: "Item not found" });
       }
-      return res.status(500).send({ message: "Server error" });
+      if (err.name === "CastError") {
+        return res
+          .status(BAD_REQUEST_STATUS_CODE)
+          .send({ message: "Invalid ID format" });
+      }
+      return res.status(DEFAULT_SERVER_ERROR).send({ message: "Server error" });
     });
 };
 
 const dislikeItem = (req, res) => {
   ClothingItem.findByIdAndUpdate(
     req.params.itemId,
-    { $pull: { likes: req.user._id } }, // remove _id from the array
+    { $pull: { likes: req.user._id } },
     { new: true }
   )
-    .then((item) => {
-      if (!item) {
-        return res.status(404).send({ message: "Item ID not found" });
-      }
-      return res.send(item);
-    })
+    .orFail()
+    .then((item) => res.status(200).send(item))
     .catch((err) => {
-      if (err.name === "CastError") {
-        return res.status(400).send({ message: "Invalid ID format" });
+      console.error(err);
+      if (err.name === "DocumentNotFoundError") {
+        return res
+          .status(RESOURCE_NOT_FOUND)
+          .send({ message: "Item not found" });
       }
-      return res.status(500).send({ message: "Server error" });
+      if (err.name === "CastError") {
+        return res
+          .status(BAD_REQUEST_STATUS_CODE)
+          .send({ message: "Invalid ID format" });
+      }
+      return res.status(DEFAULT_SERVER_ERROR).send({ message: "Server error" });
     });
 };
 
