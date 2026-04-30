@@ -10,7 +10,9 @@ const getItems = (req, res) => {
     .then((items) => res.status(200).send(items))
     .catch((err) => {
       console.error(err);
-      return res.status(DEFAULT_SERVER_ERROR).send({ message: err.message });
+      return res
+        .status(DEFAULT_SERVER_ERROR)
+        .send({ message: "An error has occurred on the server" });
     });
 };
 
@@ -37,7 +39,9 @@ const getItem = (req, res) => {
     .then((item) => res.status(200).send(item))
     .catch((err) => {
       if (err.name === "DocumentNotFoundError") {
-        return res.status(RESOURCE_NOT_FOUND).send({ message: err.message });
+        return res
+          .status(RESOURCE_NOT_FOUND)
+          .send({ message: "Item not found" });
       }
       if (err.name === "CastError") {
         return res
@@ -45,20 +49,6 @@ const getItem = (req, res) => {
           .send({ message: err.message });
       }
       return res.status(DEFAULT_SERVER_ERROR).send({ message: err.message });
-    });
-};
-
-const updateItem = (req, res) => {
-  const { itemId } = req.params;
-  const { imageUrl } = req.body;
-
-  ClothingItem.findByIdAndUpdate(itemId, { $set: { imageUrl } })
-    .orFail()
-    .then((item) => res.status(200).send(item))
-    .catch((e) => {
-      res
-        .status(DEFAULT_SERVER_ERROR)
-        .send({ message: "Error from updateItem", e });
     });
 };
 
@@ -138,7 +128,6 @@ module.exports = {
   getItems,
   createItem,
   getItem,
-  updateItem,
   deleteItem,
   likeItem,
   dislikeItem,

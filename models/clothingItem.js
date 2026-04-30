@@ -5,6 +5,8 @@ const clothingItemSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
+    minlength: 2,
+    maxlength: 30,
   },
   weather: {
     type: String,
@@ -38,4 +40,4 @@ const clothingItemSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("clothingItems", clothingItemSchema);
+module.exports = mongoose.model("clothingItem", clothingItemSchema);
