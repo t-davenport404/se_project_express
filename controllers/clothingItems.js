@@ -15,9 +15,9 @@ const getItems = (req, res) => {
 };
 
 const createItem = (req, res) => {
-  const { itemName, weatherType, imageUrl } = req.body;
+  const { name, weather, imageUrl } = req.body;
 
-  ClothingItem.create({ itemName, weatherType, imageUrl, owner: req.user._id })
+  ClothingItem.create({ name, weather, imageUrl, owner: req.user._id })
     .then((item) => res.status(201).send(item))
     .catch((err) => {
       console.error(err);
@@ -54,7 +54,7 @@ const updateItem = (req, res) => {
 
   ClothingItem.findByIdAndUpdate(itemId, { $set: { imageUrl } })
     .orFail()
-    .then((item) => res.status(200).send({ data: item }))
+    .then((item) => res.status(200).send(item))
     .catch((e) => {
       res
         .status(DEFAULT_SERVER_ERROR)
@@ -67,7 +67,7 @@ const deleteItem = (req, res) => {
 
   ClothingItem.findByIdAndDelete(itemId)
     .orFail()
-    .then((item) => res.status(200).send({ data: item }))
+    .then((item) => res.status(200).send(item))
     .catch((err) => {
       console.error(err);
       if (err.name === "CastError") {
@@ -86,4 +86,52 @@ const deleteItem = (req, res) => {
     });
 };
 
-module.exports = { getItems, createItem, getItem, updateItem, deleteItem };
+const likeItem = (req, res) => {
+  ClothingItem.findByIdAndUpdate(
+    req.params.itemId,
+    { $addToSet: { likes: req.user._id } }, // add _id to the array if it's not there yet
+    { new: true }
+  )
+    .then((item) => {
+      if (!item) {
+        return res.status(404).send({ message: "Item ID not found" });
+      }
+      return res.send(item);
+    })
+    .catch((err) => {
+      if (err.name === "CastError") {
+        return res.status(400).send({ message: "Invalid ID format" });
+      }
+      return res.status(500).send({ message: "Server error" });
+    });
+};
+
+const dislikeItem = (req, res) => {
+  ClothingItem.findByIdAndUpdate(
+    req.params.itemId,
+    { $pull: { likes: req.user._id } }, // remove _id from the array
+    { new: true }
+  )
+    .then((item) => {
+      if (!item) {
+        return res.status(404).send({ message: "Item ID not found" });
+      }
+      return res.send(item);
+    })
+    .catch((err) => {
+      if (err.name === "CastError") {
+        return res.status(400).send({ message: "Invalid ID format" });
+      }
+      return res.status(500).send({ message: "Server error" });
+    });
+};
+
+module.exports = {
+  getItems,
+  createItem,
+  getItem,
+  updateItem,
+  deleteItem,
+  likeItem,
+  dislikeItem,
+};

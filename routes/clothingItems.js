@@ -5,11 +5,17 @@ const {
   getItem,
   updateItem,
   deleteItem,
+  likeItem,
+  dislikeItem,
 } = require("../controllers/clothingItems");
 
 itemRouter.get("/", getItems);
-itemRouter.get("/:itemId", getItem);
 itemRouter.post("/", createItem);
+
+itemRouter.put("/:itemId/likes", likeItem);
+itemRouter.delete("/:itemId/likes", dislikeItem);
+
+itemRouter.get("/:itemId", getItem);
 itemRouter.put("/:itemId", updateItem);
 itemRouter.delete("/:itemId", deleteItem);
 
