@@ -28,14 +28,20 @@ const createItem = (req, res) => {
           .status(BAD_REQUEST_STATUS_CODE)
           .send({ message: err.message });
       }
-      return res.status(DEFAULT_SERVER_ERROR).send({ message: err.message });
+      return res
+        .status(DEFAULT_SERVER_ERROR)
+        .send({ message: "An error has occurred on the server." });
     });
 };
 
 const getItem = (req, res) => {
   const { itemId } = req.params;
   ClothingItem.findById(itemId)
-    .orFail()
+    .orFail(() => {
+      const error = new Error("Item ID not found");
+      error.statusCode = NOT_FOUND_ERROR_CODE;
+      throw error;
+    })
     .then((item) => res.status(200).send(item))
     .catch((err) => {
       if (err.name === "DocumentNotFoundError") {
@@ -48,7 +54,9 @@ const getItem = (req, res) => {
           .status(BAD_REQUEST_STATUS_CODE)
           .send({ message: err.message });
       }
-      return res.status(DEFAULT_SERVER_ERROR).send({ message: err.message });
+      return res
+        .status(DEFAULT_SERVER_ERROR)
+        .send({ message: "An error has occurred on the server." });
     });
 };
 
@@ -56,7 +64,11 @@ const deleteItem = (req, res) => {
   const { itemId } = req.params;
 
   ClothingItem.findByIdAndDelete(itemId)
-    .orFail()
+    .orFail(() => {
+      const error = new Error("Card ID not found");
+      error.statusCode = NOT_FOUND_ERROR_CODE;
+      throw error;
+    })
     .then((item) => res.status(200).send(item))
     .catch((err) => {
       console.error(err);
