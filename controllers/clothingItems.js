@@ -39,7 +39,7 @@ const getItem = (req, res) => {
   ClothingItem.findById(itemId)
     .orFail(() => {
       const error = new Error("Item ID not found");
-      error.statusCode = NOT_FOUND_ERROR_CODE;
+      error.statusCode = RESOURCE_NOT_FOUND;
       throw error;
     })
     .then((item) => res.status(200).send(item))
@@ -66,7 +66,7 @@ const deleteItem = (req, res) => {
   ClothingItem.findByIdAndDelete(itemId)
     .orFail(() => {
       const error = new Error("Card ID not found");
-      error.statusCode = NOT_FOUND_ERROR_CODE;
+      error.statusCode = RESOURCE_NOT_FOUND;
       throw error;
     })
     .then((item) => res.status(200).send(item))
@@ -108,7 +108,9 @@ const likeItem = (req, res) => {
           .status(BAD_REQUEST_STATUS_CODE)
           .send({ message: "Invalid ID format" });
       }
-      return res.status(DEFAULT_SERVER_ERROR).send({ message: "Server error" });
+      return res
+        .status(DEFAULT_SERVER_ERROR)
+        .send({ message: "An error has occurred on the server" });
     });
 };
 
@@ -132,7 +134,9 @@ const dislikeItem = (req, res) => {
           .status(BAD_REQUEST_STATUS_CODE)
           .send({ message: "Invalid ID format" });
       }
-      return res.status(DEFAULT_SERVER_ERROR).send({ message: "Server error" });
+      return res
+        .status(DEFAULT_SERVER_ERROR)
+        .send({ message: "An error has occurred on the server" });
     });
 };
 
