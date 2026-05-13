@@ -3,6 +3,7 @@ const {
   BAD_REQUEST_STATUS_CODE,
   RESOURCE_NOT_FOUND,
   DEFAULT_SERVER_ERROR,
+  FORBIDDEN,
 } = require("../utils/errors");
 
 const getItems = (req, res) => {
@@ -60,8 +61,9 @@ const getItem = (req, res) => {
     });
 };
 
-const deleteItem = (req, res) => {
+const deleteItem = (req, res, next) => {
   const { itemId } = req.params;
+  const userId = req.user._id;
 
   ClothingItem.findByIdAndDelete(itemId)
     .orFail(() => {
@@ -69,22 +71,25 @@ const deleteItem = (req, res) => {
       error.statusCode = RESOURCE_NOT_FOUND;
       throw error;
     })
-    .then((item) => res.status(200).send(item))
+    .then((item) => {
+      if (!item.owner.equals(userId)) {
+        return res
+          .status(FORBIDDEN)
+          .send({ message: "You do not have permission to delete this item" });
+      }
+
+      return item.deleteOne().then(() => res.send({ message: "Item deleted" }));
+    })
     .catch((err) => {
-      console.error(err);
-      if (err.name === "CastError") {
-        return res
-          .status(BAD_REQUEST_STATUS_CODE)
-          .send({ message: "Invalid ID format" });
-      }
       if (err.name === "DocumentNotFoundError") {
-        return res
-          .status(RESOURCE_NOT_FOUND)
-          .send({ message: "Item not found" });
+        res.status(RESOURCE_NOT_FOUND).send({ message: "Item not found" });
+      } else if (err.name === "CastError") {
+        res
+          .status(BAD_REQUEST_STATUS_CODE)
+          .send({ message: "Invalid item ID" });
+      } else {
+        next(err);
       }
-      return res
-        .status(DEFAULT_SERVER_ERROR)
-        .send({ message: "An error has occurred on the server" });
     });
 };
 
