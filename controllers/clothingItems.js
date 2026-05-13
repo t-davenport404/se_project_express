@@ -38,11 +38,7 @@ const createItem = (req, res) => {
 const getItem = (req, res) => {
   const { itemId } = req.params;
   ClothingItem.findById(itemId)
-    .orFail(() => {
-      const error = new Error("Item ID not found");
-      error.statusCode = RESOURCE_NOT_FOUND;
-      throw error;
-    })
+    .orFail()
     .then((item) => res.status(200).send(item))
     .catch((err) => {
       if (err.name === "DocumentNotFoundError") {
@@ -53,7 +49,7 @@ const getItem = (req, res) => {
       if (err.name === "CastError") {
         return res
           .status(BAD_REQUEST_STATUS_CODE)
-          .send({ message: err.message });
+          .send({ message: "Invalid ID format" });
       }
       return res
         .status(DEFAULT_SERVER_ERROR)
@@ -61,16 +57,12 @@ const getItem = (req, res) => {
     });
 };
 
-const deleteItem = (req, res, next) => {
+const deleteItem = (req, res) => {
   const { itemId } = req.params;
   const userId = req.user._id;
 
-  ClothingItem.findByIdAndDelete(itemId)
-    .orFail(() => {
-      const error = new Error("Card ID not found");
-      error.statusCode = RESOURCE_NOT_FOUND;
-      throw error;
-    })
+  ClothingItem.findById(itemId)
+    .orFail()
     .then((item) => {
       if (!item.owner.equals(userId)) {
         return res
@@ -88,7 +80,9 @@ const deleteItem = (req, res, next) => {
           .status(BAD_REQUEST_STATUS_CODE)
           .send({ message: "Invalid item ID" });
       } else {
-        next(err);
+        res.status(DEFAULT_SERVER_ERROR).send({
+          message: "An error has occurred on the server",
+        });
       }
     });
 };

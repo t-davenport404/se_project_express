@@ -7,6 +7,8 @@ const {
   BAD_REQUEST_STATUS_CODE,
   RESOURCE_NOT_FOUND,
   DEFAULT_SERVER_ERROR,
+  CONFLICT,
+  UNAUTHORIZED,
 } = require("../utils/errors");
 
 const getUsers = (req, res) => {
@@ -20,7 +22,7 @@ const getUsers = (req, res) => {
     });
 };
 
-const createUser = (req, res, next) => {
+const createUser = (req, res) => {
   const { name, avatar, email, password } = req.body;
 
   if (!email || !password) {
@@ -38,7 +40,7 @@ const createUser = (req, res, next) => {
       .catch((err) => {
         if (err.code === 11000) {
           return res
-            .status(409)
+            .status(CONFLICT)
             .send({ message: "User with this email already exists" });
         }
         if (err.name === "ValidationError") {
@@ -47,13 +49,21 @@ const createUser = (req, res, next) => {
             .send({ message: "An error has occurred" });
         }
 
-        return next(err);
+        return res
+          .status(DEFAULT_SERVER_ERROR)
+          .send({ message: "An error has occurred on the server" });
       })
   );
 };
 
 const login = (req, res) => {
   const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res
+      .status(BAD_REQUEST_STATUS_CODE)
+      .send({ message: "Email and password are required" });
+  }
 
   return User.findUserByCredentials(email, password)
     .then((user) => {
@@ -64,11 +74,18 @@ const login = (req, res) => {
       res.send({ token });
     })
     .catch((err) => {
-      res.status(401).send({ message: err.message });
+      if (err.message === "Incorrect email or password") {
+        return res
+          .status(UNAUTHORIZED)
+          .send({ message: "Incorrect email or password" });
+      }
+      return res
+        .status(DEFAULT_SERVER_ERROR)
+        .send({ message: "An error has occurred on the server" });
     });
 };
 
-const getCurrentUser = (req, res, next) => {
+const getCurrentUser = (req, res) => {
   const userId = req.user._id;
 
   return User.findById(userId)
@@ -86,31 +103,39 @@ const getCurrentUser = (req, res, next) => {
           .send({ message: "An error has occurred." });
       }
 
-      return next(err);
+      return res
+        .status(DEFAULT_SERVER_ERROR)
+        .send({ message: "An error has occurred on the server" });
     });
 };
 
-const updateUser = (req, res, next) => {
+const updateUser = (req, res) => {
   const { name, avatar } = req.body;
 
   return User.findByIdAndUpdate(
     req.user._id,
     { name, avatar },
     {
-      new: true, // Returns the updated document instead of the old one
-      runValidators: true, // Essential for Step 8 requirements
+      new: true,
+      runValidators: true,
     }
   )
     .orFail()
     .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === "ValidationError") {
-        res.status(BAD_REQUEST_STATUS_CODE).send({ message: err.message });
-      } else if (err.name === "DocumentNotFoundError") {
-        res.status(RESOURCE_NOT_FOUND).send({ message: "User not found" });
-      } else {
-        next(err);
+        return res
+          .status(BAD_REQUEST_STATUS_CODE)
+          .send({ message: err.message });
       }
+      if (err.name === "DocumentNotFoundError") {
+        return res
+          .status(RESOURCE_NOT_FOUND)
+          .send({ message: "User not found" });
+      }
+      return res
+        .status(DEFAULT_SERVER_ERROR)
+        .send({ message: "An error has occurred on the server" });
     });
 };
 

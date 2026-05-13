@@ -10,10 +10,10 @@ const {
 } = require("../controllers/clothingItems");
 
 itemRouter.get("/", getItems);
-itemRouter.get("/:itemId", getItem);
 
 itemRouter.use(auth);
 
+itemRouter.get("/:itemId", getItem);
 itemRouter.post("/", createItem);
 itemRouter.delete("/:itemId", deleteItem);
 itemRouter.put("/:itemId/likes", likeItem);
