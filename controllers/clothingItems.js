@@ -8,7 +8,7 @@ const {
 
 const getItems = (req, res) => {
   ClothingItem.find({})
-    .then((items) => res.status(200).send(items))
+    .then((items) => res.send(items))
     .catch((err) => {
       console.error(err);
       return res
@@ -27,29 +27,7 @@ const createItem = (req, res) => {
       if (err.name === "ValidationError") {
         return res
           .status(BAD_REQUEST_STATUS_CODE)
-          .send({ message: err.message });
-      }
-      return res
-        .status(DEFAULT_SERVER_ERROR)
-        .send({ message: "An error has occurred on the server." });
-    });
-};
-
-const getItem = (req, res) => {
-  const { itemId } = req.params;
-  ClothingItem.findById(itemId)
-    .orFail()
-    .then((item) => res.status(200).send(item))
-    .catch((err) => {
-      if (err.name === "DocumentNotFoundError") {
-        return res
-          .status(RESOURCE_NOT_FOUND)
-          .send({ message: "Item not found" });
-      }
-      if (err.name === "CastError") {
-        return res
-          .status(BAD_REQUEST_STATUS_CODE)
-          .send({ message: "Invalid ID format" });
+          .send({ message: "Invalid data" });
       }
       return res
         .status(DEFAULT_SERVER_ERROR)
@@ -142,7 +120,6 @@ const dislikeItem = (req, res) => {
 module.exports = {
   getItems,
   createItem,
-  getItem,
   deleteItem,
   likeItem,
   dislikeItem,

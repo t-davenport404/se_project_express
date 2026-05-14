@@ -3,7 +3,6 @@ const auth = require("../middlewares/auth");
 const {
   getItems,
   createItem,
-  getItem,
   deleteItem,
   likeItem,
   dislikeItem,
@@ -13,7 +12,6 @@ itemRouter.get("/", getItems);
 
 itemRouter.use(auth);
 
-itemRouter.get("/:itemId", getItem);
 itemRouter.post("/", createItem);
 itemRouter.delete("/:itemId", deleteItem);
 itemRouter.put("/:itemId/likes", likeItem);
