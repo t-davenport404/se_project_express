@@ -3,6 +3,10 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const { JWT_SECRET } = require("../utils/config");
 
+const BadRequestError = require("../errors/bad-request-err");
+const ForbiddenError = require("../errors/bad-request-err");
+const NotFoundError = require("../errors/not-found-error");
+
 const {
   BAD_REQUEST_STATUS_CODE,
   RESOURCE_NOT_FOUND,
@@ -11,18 +15,21 @@ const {
   UNAUTHORIZED,
 } = require("../utils/errors");
 
-const getUsers = (req, res) => {
+const getUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.status(200).send(users))
     .catch((err) => {
-      console.error(err);
-      return res
-        .status(DEFAULT_SERVER_ERROR)
-        .send({ message: "An error has occurred on the server." });
+      if (err.name === "DocumentNotFoundError") {
+        next(new NotFoundError("Item not found"));
+      } else if (err.name === "CastError") {
+        next(new BadRequestError("Invalid item ID"));
+      } else {
+        next(err);
+      }
     });
 };
 
-const createUser = (req, res) => {
+const createUser = (req, res, next) => {
   const { name, avatar, email, password } = req.body;
 
   if (!email || !password) {
@@ -38,25 +45,23 @@ const createUser = (req, res) => {
         res.status(201).send(userObject);
       })
       .catch((err) => {
-        if (err.code === 11000) {
-          return res
-            .status(CONFLICT)
-            .send({ message: "User with this email already exists" });
+        // if (err.code === 11000) {
+        //   return res
+        //     .status(CONFLICT)
+        //     .send({ message: "User with this email already exists" });
+        // }
+        if (err.name === "DocumentNotFoundError") {
+          next(new NotFoundError("Item not found"));
+        } else if (err.name === "CastError") {
+          next(new BadRequestError("Invalid item ID"));
+        } else {
+          next(err);
         }
-        if (err.name === "ValidationError") {
-          return res
-            .status(BAD_REQUEST_STATUS_CODE)
-            .send({ message: "An error has occurred" });
-        }
-
-        return res
-          .status(DEFAULT_SERVER_ERROR)
-          .send({ message: "An error has occurred on the server" });
       })
   );
 };
 
-const login = (req, res) => {
+const login = (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -74,18 +79,17 @@ const login = (req, res) => {
       res.send({ token });
     })
     .catch((err) => {
-      if (err.message === "Incorrect email or password") {
-        return res
-          .status(UNAUTHORIZED)
-          .send({ message: "Incorrect email or password" });
+      if (err.name === "DocumentNotFoundError") {
+        next(new NotFoundError("Item not found"));
+      } else if (err.name === "CastError") {
+        next(new BadRequestError("Invalid item ID"));
+      } else {
+        next(err);
       }
-      return res
-        .status(DEFAULT_SERVER_ERROR)
-        .send({ message: "An error has occurred on the server" });
     });
 };
 
-const getCurrentUser = (req, res) => {
+const getCurrentUser = (req, res, next) => {
   const userId = req.user._id;
 
   return User.findById(userId)
@@ -93,23 +97,16 @@ const getCurrentUser = (req, res) => {
     .then((user) => res.status(200).send(user))
     .catch((err) => {
       if (err.name === "DocumentNotFoundError") {
-        return res
-          .status(RESOURCE_NOT_FOUND)
-          .send({ message: "User not found" });
+        next(new NotFoundError("Item not found"));
+      } else if (err.name === "CastError") {
+        next(new BadRequestError("Invalid item ID"));
+      } else {
+        next(err);
       }
-      if (err.name === "CastError") {
-        return res
-          .status(BAD_REQUEST_STATUS_CODE)
-          .send({ message: "An error has occurred." });
-      }
-
-      return res
-        .status(DEFAULT_SERVER_ERROR)
-        .send({ message: "An error has occurred on the server" });
     });
 };
 
-const updateUser = (req, res) => {
+const updateUser = (req, res, next) => {
   const { name, avatar } = req.body;
 
   return User.findByIdAndUpdate(
@@ -123,19 +120,13 @@ const updateUser = (req, res) => {
     .orFail()
     .then((user) => res.send(user))
     .catch((err) => {
-      if (err.name === "ValidationError") {
-        return res
-          .status(BAD_REQUEST_STATUS_CODE)
-          .send({ message: err.message });
-      }
       if (err.name === "DocumentNotFoundError") {
-        return res
-          .status(RESOURCE_NOT_FOUND)
-          .send({ message: "User not found" });
+        next(new NotFoundError("Item not found"));
+      } else if (err.name === "CastError") {
+        next(new BadRequestError("Invalid item ID"));
+      } else {
+        next(err);
       }
-      return res
-        .status(DEFAULT_SERVER_ERROR)
-        .send({ message: "An error has occurred on the server" });
     });
 };
 
