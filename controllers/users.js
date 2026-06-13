@@ -5,6 +5,7 @@ const { JWT_SECRET } = require("../utils/config");
 
 const BadRequestError = require("../errors/bad-request-error");
 const NotFoundError = require("../errors/not-found-error");
+const ConflictError = require("../errors/conflict-error");
 
 const { BAD_REQUEST_STATUS_CODE } = require("../utils/errors");
 
@@ -13,12 +14,12 @@ const getUsers = (req, res, next) => {
     .then((users) => res.status(200).send(users))
     .catch((err) => {
       if (err.name === "DocumentNotFoundError") {
-        next(new NotFoundError("Item not found"));
-      } else if (err.name === "CastError") {
-        next(new BadRequestError("Invalid item ID"));
-      } else {
-        next(err);
+        return next(new NotFoundError("Item not found"));
       }
+      if (err.name === "CastError") {
+        return next(new BadRequestError("Invalid item ID"));
+      }
+      return next(err);
     });
 };
 
@@ -38,13 +39,21 @@ const createUser = (req, res, next) => {
         res.status(201).send(userObject);
       })
       .catch((err) => {
-        if (err.name === "DocumentNotFoundError") {
-          next(new NotFoundError("Item not found"));
-        } else if (err.name === "CastError") {
-          next(new BadRequestError("Invalid item ID"));
-        } else {
-          next(err);
+        if (err.code === 11000) {
+          return next(
+            new ConflictError("A user with this email already exists")
+          );
         }
+        if (err.name === "ValidationError") {
+          return next(new BadRequestError("Invalid user registration data"));
+        }
+        if (err.name === "DocumentNotFoundError") {
+          return next(new NotFoundError("Item not found"));
+        }
+        if (err.name === "CastError") {
+          return next(new BadRequestError("Invalid item ID"));
+        }
+        return next(err);
       })
   );
 };
@@ -68,12 +77,12 @@ const login = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === "DocumentNotFoundError") {
-        next(new NotFoundError("Item not found"));
-      } else if (err.name === "CastError") {
-        next(new BadRequestError("Invalid item ID"));
-      } else {
-        next(err);
+        return next(new NotFoundError("Item not found"));
       }
+      if (err.name === "CastError") {
+        return next(new BadRequestError("Invalid item ID"));
+      }
+      return next(err);
     });
 };
 
@@ -85,12 +94,12 @@ const getCurrentUser = (req, res, next) => {
     .then((user) => res.status(200).send(user))
     .catch((err) => {
       if (err.name === "DocumentNotFoundError") {
-        next(new NotFoundError("Item not found"));
-      } else if (err.name === "CastError") {
-        next(new BadRequestError("Invalid item ID"));
-      } else {
-        next(err);
+        return next(new NotFoundError("Item not found"));
       }
+      if (err.name === "CastError") {
+        return next(new BadRequestError("Invalid item ID"));
+      }
+      return next(err);
     });
 };
 
@@ -108,13 +117,16 @@ const updateUser = (req, res, next) => {
     .orFail()
     .then((user) => res.send(user))
     .catch((err) => {
-      if (err.name === "DocumentNotFoundError") {
-        next(new NotFoundError("Item not found"));
-      } else if (err.name === "CastError") {
-        next(new BadRequestError("Invalid item ID"));
-      } else {
-        next(err);
+      if (err.name === "ValidationError") {
+        return next(new BadRequestError("Invalid profile update data"));
       }
+      if (err.name === "DocumentNotFoundError") {
+        return next(new NotFoundError("User not found"));
+      }
+      if (err.name === "CastError") {
+        return next(new BadRequestError("Invalid user ID format"));
+      }
+      return next(err);
     });
 };
 
