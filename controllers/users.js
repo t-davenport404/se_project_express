@@ -3,17 +3,10 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const { JWT_SECRET } = require("../utils/config");
 
-const BadRequestError = require("../errors/bad-request-err");
-const ForbiddenError = require("../errors/bad-request-err");
+const BadRequestError = require("../errors/bad-request-error");
 const NotFoundError = require("../errors/not-found-error");
 
-const {
-  BAD_REQUEST_STATUS_CODE,
-  RESOURCE_NOT_FOUND,
-  DEFAULT_SERVER_ERROR,
-  CONFLICT,
-  UNAUTHORIZED,
-} = require("../utils/errors");
+const { BAD_REQUEST_STATUS_CODE } = require("../utils/errors");
 
 const getUsers = (req, res, next) => {
   User.find({})
@@ -45,11 +38,6 @@ const createUser = (req, res, next) => {
         res.status(201).send(userObject);
       })
       .catch((err) => {
-        // if (err.code === 11000) {
-        //   return res
-        //     .status(CONFLICT)
-        //     .send({ message: "User with this email already exists" });
-        // }
         if (err.name === "DocumentNotFoundError") {
           next(new NotFoundError("Item not found"));
         } else if (err.name === "CastError") {
