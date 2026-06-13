@@ -6,6 +6,7 @@ const { JWT_SECRET } = require("../utils/config");
 const BadRequestError = require("../errors/bad-request-error");
 const NotFoundError = require("../errors/not-found-error");
 const ConflictError = require("../errors/conflict-error");
+const UnauthorizedError = require("../errors/unauthorized-error");
 
 const { BAD_REQUEST_STATUS_CODE } = require("../utils/errors");
 
@@ -76,6 +77,9 @@ const login = (req, res, next) => {
       res.send({ token });
     })
     .catch((err) => {
+      if (err.message === "Incorrect email or password") {
+        return next(new UnauthorizedError("Incorrect email or password"));
+      }
       if (err.name === "DocumentNotFoundError") {
         return next(new NotFoundError("Item not found"));
       }
